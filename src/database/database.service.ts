@@ -18,6 +18,7 @@ export const databaseProviders = [
 				password: config.get(Configuration.PASSWORD),
 				entities: ["dist/**/*.entity.js"],
 				migrations: ["src/database/migrations"],
+				url: config.get(Configuration.DATABASE_URL),
 				ssl: true,
 				extra: {
 					ssl: {

@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import { parse } from "dotenv";
-import { DatabaseModule } from "src/database/database.module";
 
 export class ConfigService {
 	private readonly envConfig: { [key: string]: string };
@@ -18,6 +17,7 @@ export class ConfigService {
 			}
 
 			this.envConfig = parse(fs.readFileSync(envFilePath));
+			
 		} else {
 			this.envConfig = {
 				PORT: process.env.PORT,
@@ -25,6 +25,7 @@ export class ConfigService {
 				USERNAME: process.env.USERNAME,
 				PASSWORD: process.env.PASSWORD,
 				DATABASE_PORT: process.env.DATABASE_PORT,
+				DATABASE_URL: process.env.DATABASE_URL,
 				JWT_SECRET: process.env.JWT_SECRET,
 			};
 		}
