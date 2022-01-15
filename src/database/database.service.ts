@@ -18,6 +18,12 @@ export const databaseProviders = [
 				password: config.get(Configuration.PASSWORD),
 				entities: ["dist/**/*.entity.js"],
 				migrations: ["src/database/migrations"],
+				ssl: true,
+				extra: {
+					ssl: {
+						rejectUnauthorized: false,
+					},
+				},
 			} as ConnectionOptions;
 		},
 	}),
