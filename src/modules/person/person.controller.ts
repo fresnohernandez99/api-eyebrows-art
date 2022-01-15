@@ -46,7 +46,7 @@ export class PersonController {
 		return user;
 	}
 
-	@Get("/requests")
+	@Get("/requests/all")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
 	async getRequests(): Promise<Person[]> {
