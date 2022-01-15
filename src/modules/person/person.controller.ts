@@ -70,7 +70,7 @@ export class PersonController {
 		return await this._personService.update(id, person);
 	}
 
-	@Patch(":id")
+	@Patch("/accept-request/:id")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
 	async acceptRequest(@Param("id", ParseIntPipe) id: number) {
