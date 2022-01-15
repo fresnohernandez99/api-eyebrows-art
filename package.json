@@ -5,6 +5,9 @@
   "author": "Eddy Yoel Fresno",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": "16.13.1"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "postinstall": "npm run prestart:prod",
