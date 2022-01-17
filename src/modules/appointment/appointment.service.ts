@@ -19,34 +19,25 @@ export class AppointmentService {
 		private readonly _repository: AppointmentRepository
 	) {}
 
-	async get(id: number): Promise<Appointment> {
-		if (!id) {
-			throw new BadRequestException("id must be sent");
-		}
-
+	async get(id: number) {
 		const appointment: Appointment = await this._repository.findOne(id);
-
-		if (!appointment) throw new NotFoundException();
-
 		return appointment;
 	}
 
-	async getAllByUserId(id: number): Promise<Appointment[]> {
+	async getAllByUserId(id: number) {
 		const personRepo = await getConnection().getRepository(Person);
 		const existPerson = await personRepo.findOne(id);
 
-		if (!existPerson) throw new BadRequestException();
+		if (!existPerson) return null
 
 		const appointments: Appointment[] = await this._repository.find({
 			where: { owner: existPerson.id },
 		});
 
-		if (appointments.length == 0) throw new NotFoundException();
-
 		return appointments;
 	}
 
-	async getAppointmensRequest(): Promise<Appointment[]> {
+	async getAppointmensRequest() {
 		const appointments: Appointment[] = await this._repository.find({
 			where: { status: StatusType.WAITING },
 		});
@@ -54,7 +45,7 @@ export class AppointmentService {
 		return appointments;
 	}
 
-	async getAppointmensAccepted(): Promise<Appointment[]> {
+	async getAppointmensAccepted() {
 		const appointments: Appointment[] = await this._repository.find({
 			where: { status: StatusType.ACCEPTED },
 		});
@@ -70,13 +61,13 @@ export class AppointmentService {
 		return appointments;
 	}
 
-	async create(appointment: Appointment): Promise<Appointment> {
+	async create(appointment: Appointment) {
 		const personRepo = await getConnection().getRepository(Person);
 		const existPerson = await personRepo.findOne({
 			where: { id: appointment.owner },
 		});
 
-		if (!existPerson) throw new BadRequestException();
+		if (!existPerson) return null
 
 		appointment.owner = existPerson;
 
@@ -86,7 +77,7 @@ export class AppointmentService {
 		return savedAppointment;
 	}
 
-	async adminAcceptAppointment(id: number): Promise<Object> {
+	async adminAcceptAppointment(id: number) {
 		const property = await this._repository.findOne({
 			where: { id },
 		});
@@ -102,15 +93,15 @@ export class AppointmentService {
 				...property, // existing fields
 				...updateObj, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null
 	}
 
-	async clientAcceptAppointment(id: number, userId: number): Promise<Object> {
+	async clientAcceptAppointment(id: number, userId: number) {
 		const property = await this._repository.findOne({
 			where: { id },
 		});
 
-		if (property.owner.id != userId) throw new UnauthorizedException();
+		if (property.owner.id != userId) return null
 
 		var updateString = JSON.stringify(property);
 		var updateObj: Appointment = JSON.parse(updateString);
@@ -121,13 +112,13 @@ export class AppointmentService {
 				...property, // existing fields
 				...updateObj, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null
 	}
 
 	async adminChangeAppointment(
 		id: number,
 		change: ChangeAppointmentDto
-	): Promise<Object> {
+	) {
 		const property = await this._repository.findOne({
 			where: { id },
 		});
@@ -143,19 +134,38 @@ export class AppointmentService {
 				...property, // existing fields
 				...updateObj, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null
+	}
+
+	async adminCancelAppointment(
+		id: number
+	) {
+		const property = await this._repository.findOne({
+			where: { id },
+		});
+
+		var updateString = JSON.stringify(property);
+		var updateObj: Appointment = JSON.parse(updateString);
+		updateObj.status = StatusType.CANCELED;
+
+		if (property) {
+			return await this._repository.save({
+				...property, // existing fields
+				...updateObj, // updated fields
+			});
+		} else return null
 	}
 
 	async clientChangeAppointment(
 		id: number,
 		change: ChangeAppointmentDto,
 		userId: number
-	): Promise<Object> {
+	) {
 		const property = await this._repository.findOne({
 			where: { id },
 		});
 
-		if (property.owner.id != userId) throw new UnauthorizedException();
+		if (property.owner.id != userId) return null
 
 		var updateString = JSON.stringify(property);
 		var updateObj: Appointment = JSON.parse(updateString);
@@ -168,10 +178,10 @@ export class AppointmentService {
 				...property, // existing fields
 				...updateObj, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null
 	}
 
-	async update(id: number, appointment: Appointment): Promise<Object> {
+	async update(id: number, appointment: Appointment) {
 		const property = await this._repository.findOne({
 			where: { id },
 		});
@@ -181,15 +191,15 @@ export class AppointmentService {
 				...property, // existing fields
 				...appointment, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null
 	}
 
-	async delete(id: number, isAdmin: boolean, userId: number): Promise<void> {
+	async delete(id: number, isAdmin: boolean, userId: number) {
 		const appointmentExist = await this._repository.findOne(id ,{
 			relations: ["owner"]
 		});
 
-		if (!appointmentExist) throw new NotFoundException();
+		if (!appointmentExist) return null
 
 		if (!isAdmin && userId != appointmentExist.owner.id)
 			throw new UnauthorizedException();

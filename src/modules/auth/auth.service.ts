@@ -21,33 +21,37 @@ export class AuthService {
 		private readonly _jwtService: JwtService
 	) {}
 
-	async signup(signupDto: SignupDto): Promise<Object> {
+	async signup(signupDto: SignupDto) {
 		const { phone } = signupDto;
 		const personExists = await this._authRepository.findOne({
 			where: [{ phone }],
 		});
 
-		if (personExists) throw new ConflictException("phone already exists");
+		if (personExists) return null;
 
 		return this._authRepository.signup(signupDto);
 	}
 
-	async signin(signinDto: SigninDto): Promise<{ token: string }> {
+	async signin(signinDto: SigninDto) {
 		const { phone, password } = signinDto;
 
 		const person: Person = await this._authRepository.findOne({
 			where: { phone },
 		});
 
-		if (!person) {
-			throw new NotFoundException("user does not exist");
-		}
+		if (!person) return {
+			code: 26,
+			message: "not a user",
+			data: {},
+		};
 
 		const isMatch = await compare(password, person.password);
 
-		if (!isMatch) {
-			throw new UnauthorizedException("invalid credentials");
-		}
+		if (!isMatch) return {
+			code: 27,
+			message: "wrong password",
+			data: {},
+		};
 
 		const payload: IJwtPayload = {
 			id: person.id,
@@ -59,6 +63,21 @@ export class AuthService {
 
 		const token = await this._jwtService.sign(payload);
 
-		return { token };
+		var isAdmin = false;
+
+		person.roles.find((rol) => {
+			if (rol.name == RoleType.ADMIN) isAdmin = true;
+		});
+
+		return {
+			code: 1,
+			message: "login success",
+			data: {
+				token,
+				phone: person.phone,
+				displayname: person.displayname,
+				isAdmin,
+			},
+		};
 	}
 }

@@ -28,53 +28,142 @@ export class AppointmentController {
 	@Get(":id")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
-	async get(@Param("id", ParseIntPipe) id: number): Promise<Appointment> {
+	@UsePipes(ValidationPipe)
+	async get(@Param("id", ParseIntPipe) id: number) {
 		const appointment = await this._service.get(id);
-		return appointment;
+
+		if (appointment == null)
+			return {
+				code: 2,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { appointment },
+		};
 	}
 
 	@Get("/client/:id")
 	@UseGuards(AuthGuard(), RoleGuard)
-	async getAllByUserId(
-		@Request() req,
-		@Param("id", ParseIntPipe) id: number
-	): Promise<Appointment[]> {
-		if (req.user.id != id) throw new UnauthorizedException();
+	@UsePipes(ValidationPipe)
+	async getAllByUserId(@Request() req, @Param("id", ParseIntPipe) id: number) {
+		if (req.user.id != id)
+			return {
+				code: 24,
+				message: "",
+				data: {},
+			};
 
 		const appointments = await this._service.getAllByUserId(id);
-		return appointments;
+
+		if (!appointments)
+			return {
+				code: 25,
+				message: "",
+				data: { appointments },
+			};
+
+		if (appointments.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: { appointments },
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { appointments },
+		};
 	}
 
 	@Get("/request/all")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
-	async getAppointmensRequest(): Promise<Appointment[]> {
+	@UsePipes(ValidationPipe)
+	async getAppointmensRequest() {
 		const appointments = await this._service.getAppointmensRequest();
-		return appointments;
+		if (appointments.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: { appointments },
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { appointments },
+		};
 	}
 
 	@Get("/accepted/all")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
-	async getAppointmensAccepted(): Promise<Appointment[]> {
+	@UsePipes(ValidationPipe)
+	async getAppointmensAccepted() {
 		const appointments = await this._service.getAppointmensAccepted();
-		return appointments;
+
+		if (appointments.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: { appointments },
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { appointments },
+		};
 	}
 
 	@Get("/unconfirmed/all")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
-	async getAppointmensUnconfirmed(): Promise<Appointment[]> {
+	@UsePipes(ValidationPipe)
+	async getAppointmensUnconfirmed() {
 		const appointments = await this._service.getAppointmensUnconfirmed();
-		return appointments;
+		if (appointments.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: { appointments },
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { appointments },
+		};
 	}
 
 	@Post()
 	@UseGuards(AuthGuard(), RoleGuard)
 	@UsePipes(ValidationPipe)
 	async createAppointment(@Request() req, @Body() appointment: Appointment) {
-		if (req.user.id != appointment.owner) throw new UnauthorizedException();
-		return await this._service.create(appointment);
+		if (req.user.id != appointment.owner)
+			return {
+				code: 24,
+				message: "",
+				data: {},
+			};
+		var creating = await this._service.create(appointment);
+		if (!creating)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { creating },
+		};
 	}
 
 	@Patch("/admin/accept/:id")
@@ -82,7 +171,20 @@ export class AppointmentController {
 	@UseGuards(AuthGuard(), RoleGuard)
 	@UsePipes(ValidationPipe)
 	async adminAcceptAppointment(@Param("id", ParseIntPipe) id: number) {
-		return await this._service.adminAcceptAppointment(id);
+		var accepting = await this._service.adminAcceptAppointment(id);
+
+		if (!accepting)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { accepting },
+		};
 	}
 
 	@Patch("/admin/change/:id")
@@ -93,7 +195,43 @@ export class AppointmentController {
 		@Param("id", ParseIntPipe) id: number,
 		@Body() change: ChangeAppointmentDto
 	) {
-		return await this._service.adminChangeAppointment(id, change);
+		var changing = await this._service.adminChangeAppointment(id, change);
+
+		if (!changing)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { changing },
+		};
+	}
+
+	@Patch("/admin/cancel/:id")
+	@Roles(RoleType.ADMIN)
+	@UseGuards(AuthGuard(), RoleGuard)
+	@UsePipes(ValidationPipe)
+	async adminCancelAppointment(
+		@Param("id", ParseIntPipe) id: number
+	) {
+		var canceling = await this._service.adminCancelAppointment(id);
+
+		if (!canceling)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { canceling },
+		};
 	}
 
 	@Patch("/client/accept/:id")
@@ -103,10 +241,23 @@ export class AppointmentController {
 		@Request() req,
 		@Param("id", ParseIntPipe) id: number
 	) {
-		return await this._service.clientAcceptAppointment(id, req.user.id);
+		var accepting = await this._service.clientAcceptAppointment(id, req.user.id);
+
+		if (!accepting)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { accepting },
+		};
 	}
 
-	@Patch("/admin/change/:id")
+	@Patch("/client/change/:id")
 	@UseGuards(AuthGuard(), RoleGuard)
 	@UsePipes(ValidationPipe)
 	async clientChangeAppointment(
@@ -114,7 +265,20 @@ export class AppointmentController {
 		@Request() req,
 		@Body() change: ChangeAppointmentDto
 	) {
-		return await this._service.clientChangeAppointment(id, change, req.user.id);
+		var changing = await this._service.clientChangeAppointment(id, change, req.user.id);
+		
+		if (!changing)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { changing },
+		};
 	}
 
 	@Delete(":id")
@@ -126,10 +290,19 @@ export class AppointmentController {
 	) {
 		const isAdmin = req.user.roles[0] == RoleType.ADMIN;
 
-		await this._service.delete(id, isAdmin, req.user.id);
+		var deleting = await this._service.delete(id, isAdmin, req.user.id);
+		
+		if (!deleting)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
 		return {
-			statusCode: 204,
-			message: "You have deleted an obj.",
+			code: 1,
+			message: "",
+			data: { deleting },
 		};
 	}
 }

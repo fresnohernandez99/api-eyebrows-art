@@ -8,7 +8,6 @@ import {
 	Patch,
 	Post,
 	Request,
-	UnauthorizedException,
 	UploadedFile,
 	UseGuards,
 	UseInterceptors,
@@ -29,10 +28,22 @@ export class PersonController {
 
 	@UseGuards(AuthGuard())
 	@Get()
-	async getPeople(): Promise<GetPersonDto[]> {
+	async getPeople() {
 		const people = await this._personService.getAll();
+
+		if (people.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: {},
+			};
+
 		let formatedPeople = people.map((item) => new GetPersonDto(item));
-		return formatedPeople;
+		return {
+			code: 1,
+			message: "",
+			data: { formatedPeople },
+		};
 	}
 
 	@Get(":id")
@@ -41,17 +52,41 @@ export class PersonController {
 	async getUser(
 		@Param("id", ParseIntPipe)
 		id: number
-	): Promise<Person> {
+	) {
 		const user = await this._personService.get(id);
-		return user;
+
+		if (!user)
+			return {
+				code: 2,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { user },
+		};
 	}
 
 	@Get("/requests/all")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
-	async getRequests(): Promise<Person[]> {
+	async getRequests() {
 		const requests = await this._personService.getRequests();
-		return requests;
+
+		if (requests.length == 0)
+			return {
+				code: 2,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { requests },
+		};
 	}
 
 	@Patch(":id")
@@ -63,18 +98,49 @@ export class PersonController {
 		@Param("id", ParseIntPipe) id: number,
 		@Body() person: Person
 	) {
-		if (req.user.id != id) return new UnauthorizedException();
+		if (req.user.id != id)
+			return {
+				code: 24,
+				message: "unauthorized",
+				data: {},
+			};
 
 		if (file) person.photo = file.filename;
 
-		return await this._personService.update(id, person);
+		var update = await this._personService.update(id, person);
+
+		if (update == null)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { update },
+		};
 	}
 
 	@Patch("/accept-request/:id")
 	@Roles(RoleType.ADMIN)
 	@UseGuards(AuthGuard(), RoleGuard)
 	async acceptRequest(@Param("id", ParseIntPipe) id: number) {
-		return await this._personService.acceptRequest(id);
+		var accept = await this._personService.acceptRequest(id);
+
+		if (accept == null)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { accept },
+		};
 	}
 
 	@Delete(":id")
@@ -85,12 +151,25 @@ export class PersonController {
 		id: number
 	) {
 		if (req.user.roles[0] != RoleType.ADMIN && req.user.id != id)
-			return new UnauthorizedException();
+			return {
+				code: 24,
+				message: "",
+				data: {},
+			};
 
-		await this._personService.delete(id);
+		var deleting = await this._personService.delete(id);
+		
+		if (deleting == null)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
 		return {
-			statusCode: 204,
-			message: "You have deleted a person.",
+			code: 1,
+			message: "",
+			data: { deleting },
 		};
 	}
 
@@ -101,6 +180,19 @@ export class PersonController {
 		@Param("personId", ParseIntPipe) personId: number,
 		@Param("personId", ParseIntPipe) roleId: number
 	) {
-		return this._personService.setRoleToPerson(personId, roleId);
+		var setting = this._personService.setRoleToPerson(personId, roleId);
+
+		if (setting == null)
+			return {
+				code: 25,
+				message: "",
+				data: {},
+			};
+
+		return {
+			code: 1,
+			message: "",
+			data: { setting },
+		};
 	}
 }

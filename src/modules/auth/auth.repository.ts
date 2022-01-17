@@ -32,9 +32,10 @@ export class AuthRepository extends Repository<Person> {
 
 		await person.save();
 
-		return {
-			"statusCode": 201,
-			"message": "You have created a new profile."
-		}
+		return { 
+			code : 1,
+			message: "register success",
+			data: {}
+		 };
 	}
 }

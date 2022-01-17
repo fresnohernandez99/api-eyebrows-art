@@ -1,7 +1,5 @@
 import {
-	BadRequestException,
 	Injectable,
-	NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { getConnection } from "typeorm";
@@ -21,27 +19,17 @@ export class PersonService {
 		private readonly _roleRepository: RoleRepository
 	) {}
 
-	async get(id: number): Promise<Person> {
-		if (!id) {
-			throw new BadRequestException("id must be sent");
-		}
-
+	async get(id: number) {
 		const person: Person = await this._personRepository.findOne(id);
-
-		if (!person) {
-			throw new NotFoundException();
-		}
-
 		return person;
 	}
 
-	async getAll(): Promise<Person[]> {
+	async getAll() {
 		const people: Person[] = await this._personRepository.find();
-
 		return people;
 	}
 
-	async getRequests(): Promise<Person[]> {
+	async getRequests() {
 		const people: Person[] = await this._personRepository.find({
 			where: { state: StateType.WAITING },
 		});
@@ -49,7 +37,7 @@ export class PersonService {
 		return people;
 	}
 
-	async create(person: Person): Promise<Person> {
+	async create(person: Person) {
 		const repo = await getConnection().getRepository(Role);
 		const defaultRole = await repo.findOne({
 			where: { name: RoleType.GENERAL },
@@ -60,7 +48,7 @@ export class PersonService {
 		return savedPerson;
 	}
 
-	async update(id: number, person: Person): Promise<Object> {
+	async update(id: number, person: Person) {
 		const property = await this._personRepository.findOne({
 			where: { id },
 		});
@@ -70,10 +58,10 @@ export class PersonService {
 				...property, // existing fields
 				...person, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null;
 	}
 
-	async acceptRequest(id: number): Promise<Object> {
+	async acceptRequest(id: number) {
 		const property = await this._personRepository.findOne({
 			where: { id },
 		});
@@ -87,15 +75,13 @@ export class PersonService {
 				...property, // existing fields
 				...updateObj, // updated fields
 			});
-		} else throw new BadRequestException();
+		} else return null;
 	}
 
-	async delete(id: number): Promise<void> {
+	async delete(id: number) {
 		const personExist = await this._personRepository.findOne(id);
 
-		if (!personExist) {
-			throw new NotFoundException();
-		}
+		if (!personExist) return null;
 
 		await this._personRepository.delete(id);
 	}
@@ -103,22 +89,13 @@ export class PersonService {
 	async setRoleToPerson(personId: number, roleId: number) {
 		const personExist = await this._personRepository.findOne(personId);
 
-		if (!personExist) {
-			throw new NotFoundException();
-		}
+		if (!personExist) return null;
 
 		const roleExist = await this._roleRepository.findOne(roleId);
 
-		if (!roleExist) {
-			throw new NotFoundException("Role does not exist");
-		}
+		if (!roleExist) return null;
 
 		personExist.roles.push(roleExist);
-		await this._personRepository.save(personExist);
-
-		return {
-			statusCode: 200,
-			message: "Role added.",
-		};
+		return await this._personRepository.save(personExist);
 	}
 }
