@@ -30,12 +30,6 @@ export class AuthRepository extends Repository<Person> {
 		const salt = await genSalt(10);
 		person.password = await hash(password, salt);
 
-		await person.save();
-
-		return { 
-			code : 1,
-			message: "register success",
-			data: {}
-		 };
+		return await person.save();
 	}
 }

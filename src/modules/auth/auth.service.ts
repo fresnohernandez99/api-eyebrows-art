@@ -12,6 +12,7 @@ import { SigninDto, SignupDto } from "./dto";
 import { compare } from "bcryptjs";
 import { IJwtPayload } from "./jwt-payload.interface";
 import { RoleType } from "../role/roletype.enum";
+import { StateType } from "../person/state.enum";
 
 @Injectable()
 export class AuthService {
@@ -36,12 +37,12 @@ export class AuthService {
 		const { phone, password } = signinDto;
 
 		const person: Person = await this._authRepository.findOne({
-			where: { phone },
+			where: { phone, state: StateType.ACTIVE },
 		});
 
 		if (!person) return {
 			code: 26,
-			message: "not a user",
+			message: "not a user or validating yet",
 			data: {},
 		};
 
